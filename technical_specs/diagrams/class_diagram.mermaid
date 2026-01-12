@@ -1,0 +1,167 @@
+classDiagram
+    direction TB
+
+    %% Core Module
+    class Tenant {
+        +UUID id
+        +String businessName
+        +String taxId
+        +Map configJson
+        +Boolean isActive
+        +Instant createdAt
+    }
+
+    class Branch {
+        +UUID id
+        +String name
+        +BranchType type
+        +String address
+        +Boolean isActive
+    }
+
+    class User {
+        +UUID id
+        +String email
+        +String passwordHash
+        +String fullName
+        +String role
+        +Instant createdAt
+    }
+
+    %% Catalog Module
+    class Product {
+        +UUID id
+        +String sku
+        +String name
+        +String activePrinciple
+        +Boolean isControlled
+        +String imageUrl
+    }
+
+    class Batch {
+        +UUID id
+        +String batchNumber
+        +LocalDate expiryDate
+        +BigDecimal costPrice
+        +BigDecimal salePrice
+    }
+
+    %% WMS Module
+    class WarehouseZone {
+        +UUID id
+        +String name
+    }
+
+    class BinLocation {
+        +UUID id
+        +String code
+    }
+
+    class InventoryStock {
+        +UUID id
+        +Integer quantity
+        +Instant createdAt
+    }
+
+    %% Sales Module
+    class Sale {
+        +UUID id
+        +String status
+        +BigDecimal totalAmount
+        +String erpSyncStatus
+        +Instant createdAt
+    }
+
+    class SaleItem {
+        +UUID id
+        +Integer quantity
+        +BigDecimal unitPrice
+        +BigDecimal subtotal
+    }
+
+    class ComplianceLog {
+        +UUID id
+        +String drugType
+        +String patientRut
+        +String doctorName
+        +LocalDate prescriptionDate
+    }
+
+    %% Finance Module
+    class Supplier {
+        +UUID id
+        +String taxId
+        +String businessName
+    }
+
+    class AccountingAccount {
+        +UUID id
+        +String code
+        +String name
+        +String type
+    }
+
+    class JournalEntry {
+        +UUID id
+        +LocalDate transactionDate
+        +String description
+        +UUID referenceId
+        +String status
+    }
+
+    class JournalEntryLine {
+        +UUID id
+        +BigDecimal debit
+        +BigDecimal credit
+    }
+
+    %% HR Module
+    class Employee {
+        +UUID id
+        +String rut
+        +BigDecimal baseSalary
+        +BigDecimal commissionRate
+    }
+
+    class Payroll {
+        +UUID id
+        +LocalDate periodStart
+        +LocalDate periodEnd
+        +BigDecimal totalLiquid
+        +BigDecimal commissionAmount
+    }
+
+    %% Relationships - Core
+    Tenant "1" --o "*" Branch : has
+    Tenant "1" --o "*" User : has
+    Branch "1" --o "*" WarehouseZone : contains
+
+    %% Relationships - Catalog
+    Tenant "1" --o "*" Product : owns
+    Product "1" --o "*" Batch : has
+
+    %% Relationships - WMS
+    WarehouseZone "1" --o "*" BinLocation : contains
+    Branch "1" --o "*" InventoryStock : stores
+    Batch "1" --o "*" InventoryStock : tracked in
+    BinLocation "1" --o "*" InventoryStock : locates
+
+    %% Relationships - Sales
+    Tenant "1" --o "*" Sale : records
+    Branch "1" --o "*" Sale : originates
+    User "1" --o "*" Sale : creates
+    Sale "1" --o "*" SaleItem : contains
+    Batch "1" --o "*" SaleItem : sold from
+    Sale "1" --o "*" ComplianceLog : requires
+
+    %% Relationships - Finance
+    Tenant "1" --o "*" Supplier : has
+    Tenant "1" --o "*" AccountingAccount : defines
+    Tenant "1" --o "*" JournalEntry : records
+    JournalEntry "1" --o "*" JournalEntryLine : contains
+    AccountingAccount "1" --o "*" JournalEntryLine : debited/credited
+
+    %% Relationships - HR
+    Tenant "1" --o "*" Employee : employs
+    User "1" --o "0..1" Employee : linked to
+    Employee "1" --o "*" Payroll : receives

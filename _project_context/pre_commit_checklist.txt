@@ -1,0 +1,29 @@
+PRE-COMMIT CHECKLIST - Farmacia SaaS
+=====================================
+
+Verificar ANTES de ejecutar git commit:
+
+DOCUMENTACION TECNICA
+[ ] Se actualizo el diagrama de arquitectura si hubo cambios de backend?
+[ ] Se actualizo SRS.md si cambiaron requisitos?
+[ ] Se actualizo SDD.md si cambio el diseno?
+
+ESTILO Y FORMATO
+[ ] Se eliminaron todos los emojis/iconos de los textos tecnicos?
+[ ] Los mensajes de commit siguen el formato convencional?
+
+MEMORIA DEL PROYECTO
+[ ] El roadmap.md refleja el estado actual post-cambio?
+[ ] Se registro la decision en decision_log.md si aplica?
+
+README
+[ ] Se regenero la Tabla de Contenidos del README?
+[ ] Los enlaces internos funcionan correctamente?
+
+VALIDACION FINAL
+[ ] Se ejecutaron los tests del modulo afectado?
+[ ] El codigo compila/transpila sin errores?
+
+=====================================
+Si alguna casilla no aplica, marcar con [N/A]
+Si todas las casillas estan marcadas, proceder con commit.

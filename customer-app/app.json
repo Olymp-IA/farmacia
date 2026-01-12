@@ -1,0 +1,32 @@
+{
+    "expo": {
+        "name": "Farmacia Nordic",
+        "slug": "farmacia-customer",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "scheme": "farmacia-customer",
+        "platforms": [
+            "ios",
+            "android"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.farmacia.customer",
+            "infoPlist": {
+                "NSCameraUsageDescription": "Necesitamos acceso a la camara para fotografiar tu receta medica"
+            }
+        },
+        "android": {
+            "package": "com.farmacia.customer",
+            "adaptiveIcon": {
+                "backgroundColor": "#F0F4F8"
+            }
+        },
+        "plugins": [
+            "expo-router",
+            "expo-secure-store",
+            "expo-camera",
+            "expo-image-picker"
+        ]
+    }
+}

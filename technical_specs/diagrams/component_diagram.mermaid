@@ -1,0 +1,81 @@
+graph TB
+    subgraph Clients["Client Layer"]
+        POS["POS App<br/>React Native"]
+        WEB["Web Store<br/>Next.js 14"]
+    end
+
+    subgraph Gateway["API Gateway"]
+        GW["Load Balancer<br/>NGINX / Cloud LB"]
+    end
+
+    subgraph Security["Security Layer"]
+        JWT["JWT Filter"]
+        TENANT["Tenant Context"]
+        RBAC["RBAC Enforcer"]
+    end
+
+    subgraph Backend["Backend Core - Spring Boot 3.2"]
+        subgraph Modules["Domain Modules"]
+            CORE["Core Module<br/>Tenant, Branch, User"]
+            CATALOG["Catalog Module<br/>Product, Batch"]
+            WMS["WMS Module<br/>Zones, Bins, Stock"]
+            SALES["Sales Module<br/>Sale, Compliance"]
+            FINANCE["Finance Module<br/>Accounting, Journal"]
+            HR["HR Module<br/>Employee, Payroll"]
+        end
+        
+        subgraph Services["Service Layer"]
+            ACCT["AccountingService"]
+            INV["InventoryService"]
+            PAY["PayrollService"]
+        end
+    end
+
+    subgraph AI["AI Microservice - FastAPI"]
+        SEARCH["Semantic Search<br/>/search"]
+        ROUTE["Route Optimizer<br/>/wms/optimize-route"]
+        BIO["Bioequivalence<br/>/bioequivalents"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["PostgreSQL 16<br/>+ pgvector"]
+        EMBED["Vector Store<br/>product_embeddings"]
+    end
+
+    %% Client connections
+    POS --> GW
+    WEB --> GW
+
+    %% Gateway to security
+    GW --> JWT
+    JWT --> TENANT
+    TENANT --> RBAC
+
+    %% Security to modules
+    RBAC --> CORE
+    RBAC --> CATALOG
+    RBAC --> WMS
+    RBAC --> SALES
+    RBAC --> FINANCE
+    RBAC --> HR
+
+    %% Cross-module services
+    SALES --> ACCT
+    SALES --> INV
+    HR --> PAY
+    PAY --> SALES
+
+    %% Backend to AI
+    CATALOG --> SEARCH
+    WMS --> ROUTE
+    CATALOG --> BIO
+
+    %% Data connections
+    CORE --> PG
+    CATALOG --> PG
+    WMS --> PG
+    SALES --> PG
+    FINANCE --> PG
+    HR --> PG
+    SEARCH --> EMBED
+    EMBED --> PG

@@ -1,0 +1,37 @@
+%%{init: {'theme': 'base'}}%%
+flowchart LR
+    subgraph Input["Input Sources"]
+        USER["User Request"]
+        POS["POS Terminal"]
+        BATCH["Batch Import"]
+    end
+
+    subgraph Processing["Processing Layer"]
+        API["REST API"]
+        VALID["Validation"]
+        BL["Business Logic"]
+        AI["AI Processing"]
+    end
+
+    subgraph Storage["Data Storage"]
+        DB[(PostgreSQL)]
+        VECTOR[(Vector Store)]
+    end
+
+    subgraph Output["Output"]
+        RESP["API Response"]
+        REPORT["Reports"]
+        NOTIFY["Notifications"]
+    end
+
+    USER --> API
+    POS --> API
+    BATCH --> API
+    API --> VALID
+    VALID --> BL
+    BL --> DB
+    BL --> AI
+    AI --> VECTOR
+    DB --> RESP
+    DB --> REPORT
+    BL --> NOTIFY

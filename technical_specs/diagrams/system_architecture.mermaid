@@ -1,0 +1,28 @@
+%%{init: {'theme': 'base', 'themeVariables': { 'primaryColor': '#e1f5fe'}}}%%
+graph TB
+    subgraph Clients["Client Layer"]
+        POS["POS App<br/>(React Native)"]
+        WEB["Web Store<br/>(Next.js)"]
+    end
+
+    subgraph Gateway["API Gateway"]
+        GW["API Gateway / Load Balancer"]
+    end
+
+    subgraph Services["Service Layer"]
+        CORE["Backend Core<br/>(Spring Boot 3.2)"]
+        AI["AI Service<br/>(FastAPI)"]
+    end
+
+    subgraph Data["Data Layer"]
+        PG["PostgreSQL<br/>(pgvector)"]
+        CACHE["Redis Cache"]
+    end
+
+    POS --> GW
+    WEB --> GW
+    GW --> CORE
+    GW --> AI
+    CORE --> PG
+    CORE --> CACHE
+    AI --> PG

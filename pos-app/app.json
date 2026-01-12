@@ -1,0 +1,33 @@
+{
+    "expo": {
+        "name": "Farmacia POS",
+        "slug": "farmacia-pos",
+        "version": "1.0.0",
+        "orientation": "landscape",
+        "scheme": "farmacia-pos",
+        "platforms": [
+            "ios",
+            "android"
+        ],
+        "ios": {
+            "supportsTablet": true,
+            "bundleIdentifier": "com.farmacia.pos"
+        },
+        "android": {
+            "package": "com.farmacia.pos",
+            "adaptiveIcon": {
+                "backgroundColor": "#2C3E50"
+            }
+        },
+        "plugins": [
+            "expo-router",
+            "expo-secure-store",
+            [
+                "expo-local-authentication",
+                {
+                    "faceIDPermission": "Permitir $(PRODUCT_NAME) usar Face ID para autenticacion"
+                }
+            ]
+        ]
+    }
+}
