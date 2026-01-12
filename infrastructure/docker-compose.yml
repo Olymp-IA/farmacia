@@ -1,27 +1,211 @@
+version: '3.9'
+
+# ============================================================================
+# UNIFIED COMMERCE FARMACIA - Infraestructura de Producción Local
+# Arquitectura: Multi-Database + Event-Driven (SAGA)
+# ============================================================================
+
+networks:
+  # Red pública para servicios accesibles
+  farmacia-public:
+    driver: bridge
+  # Red aislada para datos clínicos (Health Vault)
+  farmacia-health-isolated:
+    driver: bridge
+    internal: true  # No accesible desde fuera
+  # Red interna para Kafka
+  farmacia-kafka:
+    driver: bridge
+
+volumes:
+  postgres-core-data:
+  postgres-health-data:
+  redis-data:
+  kafka-data:
+  zookeeper-data:
+
 services:
-  postgres-db:
+  # ==========================================================================
+  # BASE DE DATOS OLTP - Core (Ventas, Inventario, Usuarios)
+  # ==========================================================================
+  postgres-core:
     image: pgvector/pgvector:pg16
-    container_name: farmacia-postgres
+    container_name: farmacia-db-core
+    restart: unless-stopped
     environment:
-      POSTGRES_DB: farmacia_db
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: farmacia_core
+      POSTGRES_USER: farmacia_admin
+      POSTGRES_PASSWORD: ${DB_CORE_PASSWORD:-CoreSecurePass2024!}
     ports:
       - "5432:5432"
     volumes:
-      - postgres_data:/var/lib/postgresql/data
-      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-core-data:/var/lib/postgresql/data
+      - ./init-core.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
     networks:
-      - farmacia-network
+      - farmacia-public
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U farmacia_admin -d farmacia_core"]
       interval: 10s
       timeout: 5s
       retries: 5
 
-volumes:
-  postgres_data:
+  # ==========================================================================
+  # BASE DE DATOS HEALTH VAULT - Datos Clínicos (RED AISLADA)
+  # ==========================================================================
+  postgres-health:
+    image: pgvector/pgvector:pg16
+    container_name: farmacia-db-health
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: farmacia_health_vault
+      POSTGRES_USER: health_vault_admin
+      POSTGRES_PASSWORD: ${DB_HEALTH_PASSWORD:-HealthVaultSecure2024!}
+    ports:
+      - "5433:5432"  # Puerto diferente para evitar conflictos
+    volumes:
+      - postgres-health-data:/var/lib/postgresql/data
+      - ./init-health.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    networks:
+      - farmacia-health-isolated  # Solo red aislada
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U health_vault_admin -d farmacia_health_vault"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-networks:
-  farmacia-network:
-    driver: bridge
+  # ==========================================================================
+  # ZOOKEEPER - Coordinador de Kafka
+  # ==========================================================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: farmacia-zookeeper
+    restart: unless-stopped
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    volumes:
+      - zookeeper-data:/var/lib/zookeeper/data
+    networks:
+      - farmacia-kafka
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
+  # KAFKA - Event Streaming (SAGA Pattern para Seguros)
+  # ==========================================================================
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: farmacia-kafka
+    restart: unless-stopped
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+    networks:
+      - farmacia-kafka
+      - farmacia-public
+    healthcheck:
+      test: ["CMD", "kafka-topics", "--bootstrap-server", "localhost:9092", "--list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ==========================================================================
+  # KAFKA UI - Visualización de Tópicos
+  # ==========================================================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: farmacia-kafka-ui
+    restart: unless-stopped
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: farmacia-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    networks:
+      - farmacia-kafka
+      - farmacia-public
+
+  # ==========================================================================
+  # REDIS - Caché de Autorizaciones y Sesiones
+  # ==========================================================================
+  redis:
+    image: redis:7-alpine
+    container_name: farmacia-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-RedisSecure2024!}
+    volumes:
+      - redis-data:/data
+    networks:
+      - farmacia-public
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-RedisSecure2024!}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================================================
+  # BACKEND CORE - Spring Boot Application
+  # ==========================================================================
+  backend-core:
+    build:
+      context: ../backend-core
+      dockerfile: Dockerfile
+    container_name: farmacia-backend
+    restart: unless-stopped
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      postgres-health:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    ports:
+      - "8080:8080"
+    environment:
+      # Core Database
+      SPRING_DATASOURCE_CORE_URL: jdbc:postgresql://postgres-core:5432/farmacia_core
+      SPRING_DATASOURCE_CORE_USERNAME: farmacia_admin
+      SPRING_DATASOURCE_CORE_PASSWORD: ${DB_CORE_PASSWORD:-CoreSecurePass2024!}
+      # Health Vault Database
+      SPRING_DATASOURCE_HEALTH_URL: jdbc:postgresql://postgres-health:5432/farmacia_health_vault
+      SPRING_DATASOURCE_HEALTH_USERNAME: health_vault_admin
+      SPRING_DATASOURCE_HEALTH_PASSWORD: ${DB_HEALTH_PASSWORD:-HealthVaultSecure2024!}
+      # Kafka
+      SPRING_KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      # Redis
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-RedisSecure2024!}
+      # Security
+      ENCRYPTION_KEY: ${ENCRYPTION_KEY:-AES256KeyMustBe32CharsLong!!}
+      JWT_SECRET: ${JWT_SECRET:-JwtSecretKeyMustBeAtLeast256Bits!!}
+    networks:
+      - farmacia-public
+      - farmacia-health-isolated  # Acceso a Health Vault
+      - farmacia-kafka
