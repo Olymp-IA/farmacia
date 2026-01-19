@@ -1,5 +1,5 @@
-import Navbar from '@/components/Navbar';
-import ProductCard from '@/components/ProductCard';
+import Navbar from '../components/Navbar';
+import ProductCard from '../components/ProductCard';
 import { Search, Truck, ShieldCheck, Pill } from 'lucide-react';
 import Link from 'next/link';
 

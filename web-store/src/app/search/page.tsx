@@ -2,9 +2,9 @@
 
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useState, Suspense } from 'react';
-import Navbar from '@/components/Navbar';
-import ProductCard from '@/components/ProductCard';
-import { searchProducts, SearchResult } from '@/services/ai';
+import Navbar from '../../components/Navbar';
+import ProductCard from '../../components/ProductCard';
+import { searchProducts, SearchResult } from '../../services/ai';
 import { Loader2, SearchX } from 'lucide-react';
 
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || 'demo-tenant';

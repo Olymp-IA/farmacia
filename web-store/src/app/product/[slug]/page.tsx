@@ -1,8 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import Navbar from '@/components/Navbar';
-import { useCart } from '@/store/cart';
+import Navbar from '../../../components/Navbar';
+import { useCart } from '../../../store/cart';
 import { ShoppingCart, AlertTriangle, Upload, Check, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 
@@ -160,8 +160,8 @@ export default function ProductPage({ params }: { params: { slug: string } }) {
                                 onClick={handleAddToCart}
                                 disabled={product.isControlled && !prescriptionUploaded}
                                 className={`flex-1 flex items-center justify-center gap-2 py-3 rounded-soft font-medium transition-all ${product.isControlled && !prescriptionUploaded
-                                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                                        : 'btn-primary'
+                                    ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                                    : 'btn-primary'
                                     }`}
                             >
                                 <ShoppingCart className="w-5 h-5" />

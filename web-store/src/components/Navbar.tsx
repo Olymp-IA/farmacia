@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { Search, ShoppingCart, User } from 'lucide-react';
-import { useCart } from '@/store/cart';
+import { useCart } from '../store/cart';
 import SearchBar from './SearchBar';
 
 export default function Navbar() {

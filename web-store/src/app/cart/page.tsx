@@ -1,7 +1,7 @@
 'use client';
 
-import Navbar from '@/components/Navbar';
-import { useCart } from '@/store/cart';
+import Navbar from '../../components/Navbar';
+import { useCart } from '../../store/cart';
 import { Trash2, Plus, Minus, ShoppingBag, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 

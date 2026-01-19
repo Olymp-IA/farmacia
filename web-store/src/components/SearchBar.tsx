@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import { Search, X } from 'lucide-react';
-import { getSuggestions } from '@/services/ai';
+import { getSuggestions } from '../services/ai';
 
 const TENANT_ID = process.env.NEXT_PUBLIC_TENANT_ID || 'demo-tenant';
 

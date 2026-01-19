@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import { ShoppingCart, AlertTriangle } from 'lucide-react';
-import { useCart } from '@/store/cart';
-import type { Product } from '@/services/api';
+import { useCart } from '../store/cart';
+import type { Product } from '../services/api';
 
 interface ProductCardProps {
     product: Product;
@@ -54,8 +54,8 @@ export default function ProductCard({ product, stock = 0 }: ProductCardProps) {
 
                 {/* Stock Badge */}
                 <div className={`absolute top-2 right-2 text-xs font-medium px-2 py-1 rounded-full ${stock > 10 ? 'bg-green-100 text-green-700' :
-                        stock > 0 ? 'bg-yellow-100 text-yellow-700' :
-                            'bg-red-100 text-red-700'
+                    stock > 0 ? 'bg-yellow-100 text-yellow-700' :
+                        'bg-red-100 text-red-700'
                     }`}>
                     {stock > 0 ? `${stock} disponibles` : 'Agotado'}
                 </div>
@@ -79,8 +79,8 @@ export default function ProductCard({ product, stock = 0 }: ProductCardProps) {
                         onClick={handleAddToCart}
                         disabled={stock === 0}
                         className={`p-2 rounded-full transition-all duration-200 ${stock > 0
-                                ? 'bg-primary text-white hover:bg-primary-600 hover:scale-110'
-                                : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                            ? 'bg-primary text-white hover:bg-primary-600 hover:scale-110'
+                            : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                             }`}
                     >
                         <ShoppingCart className="w-5 h-5" />
